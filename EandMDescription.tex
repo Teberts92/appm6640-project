@@ -4,6 +4,7 @@
 \usepackage{booktabs} % Allows the use of \toprule, \midrule and \bottomrule in tables
 \usepackage{amsmath}
 \usepackage{nicefrac}
+\usepackage{breqn}
 
 % --- CMDS --- (search for this header to jump to paper-specific
 % commands)
@@ -22,6 +23,12 @@
 \newcommand{\dx}{\Delta x}
 \newcommand{\dy}{\Delta y}
 \newcommand{\dz}{\Delta z}
+\newcommand{\dxijk}[3]{\Delta x _{{#1}{#2}{#3}}}
+\newcommand{\dyijk}[3]{\Delta y _{{#1}{#2}{#3}}}
+\newcommand{\dzijk}[3]{\Delta z _{{#1}{#2}{#3}}}
+\newcommand{\dxdual}{\Delta x_{i-\nicefrac{1}{2}jk}}
+\newcommand{\dydual}{\Delta y_{ij-\nicefrac{1}{2}k}}
+\newcommand{\dzdual}{\Delta z_{ijk-\nicefrac{1}{2}}}
 \newcommand{\delxe}{(\curl{E})}
 
 \begin{document}
@@ -42,8 +49,9 @@ the time derivatives with a midpoint rule approximation and by replacing
 the other quantities with an average of their values at the
 endpoints.
 In this way, we essentially replace each continuous
-quantity with a second order approximation of its value at the
+quantity with a second-order approximation of its value at the
 midpoint of the interval $[\Fn{t}{n}, \Fn{t}{n+1}]$.
+This discretization is known as the Crank-Nicholson time advance scheme.
 
 Applying the discretization yields
 \begin{align*}
@@ -64,14 +72,17 @@ choose is arbitrary; let's go with the $B$ equation), we obtain:
   \Enpo - \En &= \dt ~\curl{\left( \Bn + \frac{\dt}{2}~\curl{\left( \En + \frac{1}{2} (\Enpo -
         \En) \right)} \right)} \\
 \left(\iden + \frac{\dt^2}{4} ~\curl{(\curl)} \right) \Delta E &= \dt ~\curl{\Bn} -
-\frac{\dt^2}{2} ~\curl{(\curl{\En})}
+\frac{\dt^2}{4} ~\curl{(\curl{\En})}
 \end{align*}
 
 Thus, advancing Maxwell's Equations one step forward in time using
-this discretization involves solving systems with the matrix
-\[
+this discretization involves applying the action of the inverse of the
+operator
+\begin{equation}
 \mathbf{A} = \left(\iden + \frac{\dt^2}{4} \curl{(\curl)} \right)
-\]
+\label{eq:1}
+\end{equation}
+with appropriate boundary conditions.
 
 \subsection{Discretization in Space}
 
@@ -105,11 +116,12 @@ Figure~\ref{fig:yeecurl} illustrates the field components required to
 calculate $(\curl{E})_x$ on the Yee mesh.  Stokes' Theorem suggests
 that we would like to do a line integral around the edge of our face
 and divide by the area, like so:
-\[
-(\curl{E})_x = \frac{- \dz (\Fijk{E}{z}{i}{j+1}{} -
-  \Fijk{E}{z}{i}{j}{k}) + \dy (\Fijk{E}{y}{i}{j+1}{k} -
-  \Fijk{E}{y}{i}{j}{k}) }{\dy \dz}
-\]
+
+\begin{equation}
+(\curl{E})_x = \frac{ \dz (\Fijk{E}{z}{i}{j+1}{k} -
+  \Fijk{E}{z}{i}{j}{k}) - \dy (\Fijk{E}{y}{i}{j}{k+1} -
+  \Fijk{E}{y}{i}{j}{k}) }{\dy \dz}\label{eq:2}
+\end{equation}
 
 \begin{figure}[htbp]
   \centering
@@ -132,16 +144,127 @@ operator that transforms ``face quantities'' into ``edge quantities''
 and {\it vice versa} on the Yee mesh.  It follows, since $E$ is an
 edge quantity, that $\curl{(\curl{E})}$ is also an edge quantity.  Let
 us move towards an expression for it.  Since our Yee cells might all
-be different sizes, we record within each its size lengths $dx_{ijk}$.  If we define
-$dz_{ijk-\nicefrac{1}{2}} = \frac{1}{2} (\dz_{ijk-1} + \dz_{ijk})$,
+be different sizes, we record within each its size lengths $\dx_{ijk}$.  If we define
+$\dz_{ijk-\nicefrac{1}{2}} = \frac{1}{2} (\dz_{ijk-1} + \dz_{ijk})$,
 then a discretized expression for $\curl{\delxe}$ is
 
 \begin{multline}
   (\curl{ \delxe })_x = \\ \frac{\dz_{ijk-\nicefrac{1}{2}}
     (\Fijk{\delxe}{z}{i}{j}{k} - \Fijk{\delxe}{z}{i}{j-1}{k}) -
     \dy_{ij-\nicefrac{1}{2}k} (\Fijk{\delxe}{y}{i}{j}{k} -
-    \Fijk{\delxe}{y}{i}{j}{k-1}) }{\dy_{ij-\nicefrac{1}{2}k} \dz_{ijk-\nicefrac{1}{2}} }\label{eq:1}
+    \Fijk{\delxe}{y}{i}{j}{k-1}) }{\dy_{ij-\nicefrac{1}{2}k} \dz_{ijk-\nicefrac{1}{2}} }\label{eq:3}
 \end{multline}
+
+Substituting the expression~\ref{eq:1} for the components of $\delxe$
+(appropriately modified for each component) into equation~\ref{eq:3}
+yields the following result:
+
+\begin{multline}
+  \label{eq:4}
+  (\curl{ \delxe})_x = \\
+  - \frac{1}{\dydual}
+  \left( \frac{  \Fijk{E}{x}{i}{j+1}{k}  - \Fijk{E}{x}{i}{j}{k}}
+    {\dyijk{i}{j}{k}}
+    - \frac{  \Fijk{E}{x}{i}{j}{k}  - \Fijk{E}{x}{i}{j-1}{k}}
+    {\dyijk{i}{j-1}{k}} \right) \\
+  - \frac{1}{\dzdual}
+  \left( \frac{  \Fijk{E}{x}{i}{j}{k+1}  - \Fijk{E}{x}{i}{j}{k}}
+    {\dzijk{i}{j}{k}}
+    - \frac{  \Fijk{E}{x}{i}{j}{k}  - \Fijk{E}{x}{i}{j}{k-1}}
+    {\dzijk{i}{j-1}{k}} \right) \\
+  +
+  \left( \frac{\Fijk{E}{y}{i+1}{j}{k} - \Fijk{E}{y}{i+1}{j-1}{k}}
+    {\dydual \dxijk{i+1}{j}{k}}
+    - \frac{\Fijk{E}{y}{i}{j}{k} - \Fijk{E}{y}{i}{j-1}{k}}
+    {\dydual \dxijk{i}{j}{k}} \right) \\
+  \left( \frac{\Fijk{E}{z}{i+1}{j}{k} - \Fijk{E}{y}{i+1}{j}{k-1}}
+    {\dzdual \dxijk{i+1}{j}{k}}
+    - \frac{\Fijk{E}{y}{i}{j}{k} - \Fijk{E}{y}{i}{}{k-1}}
+    {\dzdual \dxijk{i}{j}{k}} \right)
+\end{multline}
+We can add zero to the right hand side of this equation in an
+instructive manner:
+
+\begin{multline}
+  \label{eq:5}
+  (\curl{ \delxe})_x = \\
+  - \frac{1}{\dydual}
+  \left( \frac{  \Fijk{E}{x}{i}{j+1}{k}  - \Fijk{E}{x}{i}{j}{k}}
+    {\dyijk{i}{j}{k}}
+    - \frac{  \Fijk{E}{x}{i}{j}{k}  - \Fijk{E}{x}{i}{j-1}{k}}
+    {\dyijk{i}{j-1}{k}} \right) \\
+  - \frac{1}{\dzdual}
+  \left( \frac{  \Fijk{E}{x}{i}{j}{k+1}  - \Fijk{E}{x}{i}{j}{k}}
+    {\dzijk{i}{j}{k}}
+    - \frac{  \Fijk{E}{x}{i}{j}{k}  - \Fijk{E}{x}{i}{j}{k-1}}
+    {\dzijk{i}{j-1}{k}} \right) \\
+  - \frac{1}{\dxdual}
+  \left( \frac{  \Fijk{E}{x}{i+1}{j}{k}  - \Fijk{E}{x}{i}{j}{k}}
+    {\dxijk{i}{j}{k}}
+    - \frac{  \Fijk{E}{x}{i}{j}{k}  - \Fijk{E}{x}{i-1}{j}{k}}
+    {\dxijk{i-1}{j}{k}} \right) \\
+  +
+  \left( \frac{\Fijk{E}{y}{i+1}{j}{k} - \Fijk{E}{y}{i+1}{j-1}{k}}
+    {\dydual \dxijk{i+1}{j}{k}}
+    - \frac{\Fijk{E}{y}{i}{j}{k} - \Fijk{E}{y}{i}{j-1}{k}}
+    {\dydual \dxijk{i}{j}{k}} \right) \\
+  + \left( \frac{\Fijk{E}{z}{i+1}{j}{k} - \Fijk{E}{y}{i+1}{j}{k-1}}
+    {\dzdual \dxijk{i+1}{j}{k}}
+    - \frac{\Fijk{E}{y}{i}{j}{k} - \Fijk{E}{y}{i}{j}{k-1}}
+    {\dzdual \dxijk{i}{j}{k}} \right) \\
+  + \left( \frac{\Fijk{E}{z}{i+1}{j}{k} - \Fijk{E}{y}{i}{j}{k}}
+    {\dzdual \dxijk{i+1}{j}{k}}
+    - \frac{\Fijk{E}{y}{i}{j}{k} - \Fijk{E}{y}{i-1}{j}{k}}
+    {\dzdual \dxijk{i}{j}{k}} \right)
+\end{multline}
+
+Squinting hard and looking at equation~\ref{eq:5}, you should be able
+to convince yourself that it is at least a plausible discretization of
+the vector identity $\curl{ \delxe} = -\nabla^2 E + \nabla (\nabla
+\cdot E)$ (A few words on the quality of this discretization will
+follow).  In a charge-free region, $\nabla \cdot E = 0$ (an equation
+which the uniform-grid Crank-Nicholson Yee time advance can be shown
+to preserve in discrete form), allowing us to eliminate the last three
+terms of the equation above, and reducing our equation to 
+
+\begin{multline}
+  \label{eq:6}
+  (\curl{ \delxe})_x = \\
+  - \frac{1}{\dydual}
+  \left( \frac{  \Fijk{E}{x}{i}{j+1}{k}  - \Fijk{E}{x}{i}{j}{k}}
+    {\dyijk{i}{j}{k}}
+    - \frac{  \Fijk{E}{x}{i}{j}{k}  - \Fijk{E}{x}{i}{j-1}{k}}
+    {\dyijk{i}{j-1}{k}} \right) \\
+  - \frac{1}{\dzdual}
+  \left( \frac{  \Fijk{E}{x}{i}{j}{k+1}  - \Fijk{E}{x}{i}{j}{k}}
+    {\dzijk{i}{j}{k}}
+    - \frac{  \Fijk{E}{x}{i}{j}{k}  - \Fijk{E}{x}{i}{j}{k-1}}
+    {\dzijk{i}{j-1}{k}} \right) \\
+  - \frac{1}{\dxdual}
+  \left( \frac{  \Fijk{E}{x}{i+1}{j}{k}  - \Fijk{E}{x}{i}{j}{k}}
+    {\dxijk{i}{j}{k}}
+    - \frac{  \Fijk{E}{x}{i}{j}{k}  - \Fijk{E}{x}{i-1}{j}{k}}
+    {\dxijk{i-1}{j}{k}} \right)
+\end{multline}
+
+Equation~\ref{eq:5} gives us a 7-point stencil defining a matrix for
+$\curl{\delxe}$, and hence the operator given in equation~\ref{eq:1}
+in a charge-free region.  Furthermore, the
+inhomogoneous Gauss's Law $\nabla \cdot E = \frac{\rho}{\epsilon_0}$
+allows us to move the $\nabla(\nabla \cdot E)$ term to the right hand
+side without solving for it explicitly, so this process is applicable
+to problems with charges and currents as well.
+
+The matrix defined here is block-banded with seven bands, and is not
+symmetric.
+
+\section{Proposal}
+
+We propose that we investigate the Crank-Nicholson time advance scheme
+for electric and magnetic fields located on a non-uniform Yee mesh,
+using existing multigrid packages to apply the action of the inverse
+of the operator given in equation~\ref{eq:1}.  The specific point of
+interest for Adam is performance.
 
 \bibliographystyle{plain}
 \bibliography{EandMDescription}
