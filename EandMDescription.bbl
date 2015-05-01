@@ -1,0 +1,44 @@
+\begin{thebibliography}{1}
+
+\bibitem{Brezina2000}
+M~Brezina, a~J Cleary, R~D Falgout, V~E Henson, J~E Jones, Thomas~a Manteuffel,
+  Stephen~F Mccormick, and J~W Ruge.
+\newblock {Algebraic Multigrid Based on Smoothed Aggregation}.
+\newblock {\em Society}, 22(5):1570--1592, 2000.
+
+\bibitem{briggs2000multigrid}
+Briggs.
+\newblock {\em A multigrid tutorial}.
+\newblock SIAM, 2000.
+
+\bibitem{hackbusch1985multi}
+Wolfgang Hackbusch.
+\newblock {\em Mulit-grid methods and applications}.
+\newblock Springer-Verlag Berlin, 1985.
+
+\bibitem{hiptmair1998multigrid}
+Ralf Hiptmair.
+\newblock Multigrid method for maxwell's equations.
+\newblock {\em SIAM Journal on Numerical Analysis}, 36(1):204--225, 1998.
+
+\bibitem{Hu2006}
+Jonathan~J Hu, Raymond~S Tuminaro, Pavel~B Bochev, Christopher~J Garasi, and
+  Allen~C Robinson.
+\newblock {Toward an $h$-independent Algebraic Multigrid Method for Maxwell's
+  Equations}.
+\newblock {\em {SIAM Journal of Scientific Computing}}, 27(5):1669--1688, 2006.
+
+\bibitem{reitzinger2002algebraic}
+Stefan Reitzinger and Joachim Sch{\"o}berl.
+\newblock An algebraic multigrid method for finite element discretizations with
+  edge elements.
+\newblock {\em Numerical linear algebra with applications}, 9(3):223--238,
+  2002.
+
+\bibitem{yee1966numerical}
+Kane~S Yee et~al.
+\newblock Numerical solution of initial boundary value problems involving
+  maxwell's equations in isotropic media.
+\newblock {\em IEEE Trans. Antennas Propag}, 14(3):302--307, 1966.
+
+\end{thebibliography}
